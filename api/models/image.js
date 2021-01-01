@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const imageSchema = mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
-    name: String,
+    name: {type: String, required: true},
+    image: {type: String, required: true}
 });
 
 module.exports = mongoose.model('Image', imageSchema);

@@ -4,12 +4,14 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+
+
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
         cb(null, './uploads/');
     },
     filename: function(req, file, cb) {
-        cb(null, new Date().toISOString() + file.originalname);
+        cb(null, file.originalname);
     }
 });
 
@@ -21,6 +23,7 @@ const filter = (req, file, cb) => {
         cb(null, false);
     }
 }
+
 const upload = multer({
     storage: storage,
     limits: {
@@ -86,7 +89,8 @@ router.post('/bulkUpload', upload.array('images', 1000), async (req, res, next) 
         const image = new Image({
             _id: new mongoose.Types.ObjectId(),
             name: req.files[i].originalname,
-            image: req.files[i].path
+            image: req.files[i].path,
+            size: req.files[i].size
         });
         await image.save().then( result => {
             count++;
@@ -111,21 +115,22 @@ router.post('/bulkUpload', upload.array('images', 1000), async (req, res, next) 
 /**
  * Uploads a single image to the database.
  */
-router.post('/', upload.single('image'),(req, res, next) => {
+router.post('/uploadImage', upload.single('image'), (req, res, next) => {
     console.log(req.file);
     const image = new Image({
         _id:  new mongoose.Types.ObjectId(),
-        name: req.body.name,
-        image: req.file.path
+        name: req.file.originalname,
+        image: req.file.path,
+        size: req.file.size
     });
     image.save()
     .then(result => {
         res.status(201).json({
             message: 'Uploaded Image Successfully',
             uploadedImage: {
-                name: result.name,
                 _id: result._id,
                 image: result.image,
+                size: result.size,
                 request: {
                     method: 'GET',
                     url: 'http://localhost:3000/images/' + result._id
@@ -142,23 +147,22 @@ router.post('/', upload.single('image'),(req, res, next) => {
 });
 
 /**
- * Deletes a single image from the database based on the image id.
+ * Deletes an image by imageId.
  */
-router.delete('/:imageId', async (req,res,next) => {
+router.delete('/delete/:imageId', async (req,res,next) => {
     const id = req.params.imageId;
     var filepath = "";
     await Image.findById(id).exec().then(
         result => {
-            filename = result.image;
+            filepath = result.image;
         }
     );
-    console.log(filename);
     Image.deleteOne({_id: id}).exec()
     .then(result => {
         const response = {
             message: "Image Deleted"
         }
-        fs.unlinkSync(`${process.cwd()}/${filename}`)
+        fs.unlinkSync(`${process.cwd()}/${filepath}`)
         res.status(200).json(response);
     })
     .catch(err => {
@@ -170,9 +174,9 @@ router.delete('/:imageId', async (req,res,next) => {
 });
 
 /**
- * Deletes all images from the server database.
+ * Deletes all images from the database.
  */
-router.delete('/', (req, res, next) => {
+router.delete('/delete', (req, res, next) => {
     Image.deleteMany({}).exec()
     .then(result => {
         const response = {

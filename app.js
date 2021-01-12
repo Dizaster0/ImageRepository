@@ -9,13 +9,12 @@ const bodyParser = require('body-parser');
 
 // MongoDB connection
 const mongoose = require('mongoose');
-
-const imageRoutes = require('./api/routes/images');
-
-mongoose.connect('mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false', {
+mongoose.connect('mongodb+srv://Dizaster:K1NGD0M@dizaster.2fpmc.mongodb.net/ImageRepository?authSource=admin&replicaSet=Dizaster-shard-0&w=majority&readPreference=primary&appname=MongoDB%20Compass&retryWrites=true&ssl=true', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 });
+
+const imageRoutes = require('./api/routes/imageRoutes');
 
 app.use(morgan('dev'));
 app.use('/uploads', express.static('uploads'));

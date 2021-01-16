@@ -1,5 +1,5 @@
 # ImageRepository
-A RESTful Image Repository built on Node.js using Express.js and Mongo Atlas
+A RESTful Image Repository built on Node.js using Express.js and Mongo 
 
 ## Prerequisites
 Node v14.15.4  

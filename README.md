@@ -1,16 +1,16 @@
 # ImageRepository
-A RESTful Image Repository built on Node.js using Express.js and Mongo Atlas
+A RESTful Image Repository built on Node.js using Express.js and Mongo 
 
 ## Prerequisites
-Node v14.15.4  
-A MongoDB Cluster or local instance
+NodeJS v14.15.4  
+A MongoDB Cluster or local instance  
+Postman
 
 ## Setup
 1. Clone the repository and switch to master branch
-2. Ensure you have uploads folder in the root directory of the ImageRepository, if not - create it.
-3. Run npm install from the root directory of the ImageRepository
-4. Add your Mongo connection string to the mongoUri constant defined in config.js
-5. Run npm start from the root directory of the ImageRepository
+2. Run npm install from the root directory of the ImageRepository
+3. Add your Mongo connection string to the mongoUri constant defined in config.js
+4. Run npm start from the root directory of the ImageRepository
 
 ## API Instructions
 

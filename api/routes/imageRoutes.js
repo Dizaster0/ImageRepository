@@ -82,7 +82,7 @@ router.get('/:imageId', (req, res, next) => {
 /**
  * Uploads bulk images to the database.
  */
-router.post('/bulkUpload', upload.array('images', 1000), async (req, res, next) => {
+router.post('/multiple', upload.array('images', 1000), async (req, res, next) => {
     console.log(req.files);
     let count = 0;
     for (let i = 0; i < req.files.length; i++) {
@@ -115,7 +115,7 @@ router.post('/bulkUpload', upload.array('images', 1000), async (req, res, next) 
 /**
  * Uploads a single image to the database.
  */
-router.post('/uploadImage', upload.single('image'), (req, res, next) => {
+router.post('/', upload.single('image'), (req, res, next) => {
     console.log(req.file);
     const image = new Image({
         _id:  new mongoose.Types.ObjectId(),
@@ -149,7 +149,7 @@ router.post('/uploadImage', upload.single('image'), (req, res, next) => {
 /**
  * Deletes an image by imageId.
  */
-router.delete('/delete/:imageId', async (req,res,next) => {
+router.delete('/:imageId', async (req,res,next) => {
     const id = req.params.imageId;
     var filepath = "";
     await Image.findById(id).exec().then(
@@ -176,7 +176,7 @@ router.delete('/delete/:imageId', async (req,res,next) => {
 /**
  * Deletes all images from the database.
  */
-router.delete('/delete', (req, res, next) => {
+router.delete('/', (req, res, next) => {
     Image.deleteMany({}).exec()
     .then(result => {
         const response = {

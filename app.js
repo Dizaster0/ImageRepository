@@ -1,20 +1,15 @@
 const express = require('express');
 const app = express();
-
-// Middleware used for logging HTTP requests and errors.
+const configs = require('./config');
 const morgan = require('morgan');
-
-// Allows to parse request bodies
 const bodyParser = require('body-parser');
-
-// MongoDB connection
 const mongoose = require('mongoose');
-mongoose.connect('mongodb+srv://Dizaster:K1NGD0M@dizaster.2fpmc.mongodb.net/ImageRepository?authSource=admin&replicaSet=Dizaster-shard-0&w=majority&readPreference=primary&appname=MongoDB%20Compass&retryWrites=true&ssl=true', {
+const imageRoutes = require('./api/routes/imageRoutes');
+mongoose.connect(configs.mongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 });
 
-const imageRoutes = require('./api/routes/imageRoutes');
 
 app.use(morgan('dev'));
 app.use('/uploads', express.static('uploads'));

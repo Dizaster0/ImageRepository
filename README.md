@@ -14,7 +14,7 @@ Postman
 
 ## API Instructions  
 
-# Auth  
+### Auth  
 POST: Signup  
 Endpoint: /user/signup  
 You can signup as a User by passing a valid email and password in the request body of your POST request to the user signup endpoint.  
@@ -25,7 +25,7 @@ Endpoint: /user/login
 You can login as a User and retrieve a JWT token by passing valid user credentials in the request body of the user login endpoint.  
 Note: Request Body must contain 'email' and 'password' fields.  
 
-# Image API  
+### Image API  
 To use any of the API's below, you must pass a valid JWT token in an Authorization request header.    
 
 POST : Upload Single Image     

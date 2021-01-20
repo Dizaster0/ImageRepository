@@ -9,7 +9,7 @@ Postman
 ## Setup
 1. Clone the repository and switch to master branch
 2. Run npm install from the root directory of the ImageRepository
-3. Add your Mongo connection string to the MONGO_URI field defined in ~.env
+3. Add your Mongo connection string to the MONGO_URI field defined in ~/.env
 4. Run npm start from the root directory of the ImageRepository
 
 ## API Instructions  

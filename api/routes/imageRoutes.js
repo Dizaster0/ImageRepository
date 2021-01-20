@@ -4,8 +4,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-
-
+const checkAuth = require('../middleware/check-auth');
 const storage = multer.diskStorage({
     destination: function(req, file, cb) {
         cb(null, './uploads/');
@@ -14,8 +13,6 @@ const storage = multer.diskStorage({
         cb(null, file.originalname);
     }
 });
-
-// Filter to only accept images
 const filter = (req, file, cb) => {
     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
         cb(null, true);
@@ -23,7 +20,6 @@ const filter = (req, file, cb) => {
         cb(null, false);
     }
 }
-
 const upload = multer({
     storage: storage,
     limits: {
@@ -33,10 +29,7 @@ const upload = multer({
 });
 const Image = require('../models/image');
 
-/**
- * Returns a JSON array  of all images in the database.
- */
-router.get('/', (req, res, next) => {
+router.get('/', checkAuth, (req, res, next) => {
     Image.find()
     .select('name _id image')
     .exec()
@@ -55,11 +48,7 @@ router.get('/', (req, res, next) => {
     });
 });
 
-
-/**
- * Returns a single JSON object representing an image from the database.
- */
-router.get('/:imageId', (req, res, next) => {
+router.get('/:imageId', checkAuth, (req, res, next) => {
     const imageId = req.params.imageId;
     Image.findById(imageId)
     .select('_id name image')
@@ -79,10 +68,7 @@ router.get('/:imageId', (req, res, next) => {
     });
 });
 
-/**
- * Uploads bulk images to the database.
- */
-router.post('/multiple', upload.array('images', 1000), async (req, res, next) => {
+router.post('/multiple', checkAuth, upload.array('images', 1000), async (req, res, next) => {
     console.log(req.files);
     let count = 0;
     for (let i = 0; i < req.files.length; i++) {
@@ -112,10 +98,7 @@ router.post('/multiple', upload.array('images', 1000), async (req, res, next) =>
     }
 });
 
-/**
- * Uploads a single image to the database.
- */
-router.post('/', upload.single('image'), (req, res, next) => {
+router.post('/', checkAuth, upload.single('image'), (req, res, next) => {
     console.log(req.file);
     const image = new Image({
         _id:  new mongoose.Types.ObjectId(),
@@ -146,10 +129,7 @@ router.post('/', upload.single('image'), (req, res, next) => {
     });
 });
 
-/**
- * Deletes an image by imageId.
- */
-router.delete('/:imageId', async (req,res,next) => {
+router.delete('/:imageId', checkAuth, async (req,res,next) => {
     const id = req.params.imageId;
     var filepath = "";
     await Image.findById(id).exec().then(
@@ -173,10 +153,7 @@ router.delete('/:imageId', async (req,res,next) => {
     });
 });
 
-/**
- * Deletes all images from the database.
- */
-router.delete('/', (req, res, next) => {
+router.delete('/', checkAuth, (req, res, next) => {
     Image.deleteMany({}).exec()
     .then(result => {
         const response = {

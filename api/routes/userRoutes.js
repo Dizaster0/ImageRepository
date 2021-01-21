@@ -8,12 +8,12 @@ const User = require("../models/user");
 
 router.post('/signup', (req, res, next) => {
     User.find({
-        email: req.body.email
+        username: req.body.username
     }).exec()
     .then(user => {
         if (user.length >= 1) {
             return res.status(409).json({
-                message: "Email already exists"
+                message: "The provided username is already taken. Please provide a unique User Id."
             });
         } else {
             bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -24,14 +24,14 @@ router.post('/signup', (req, res, next) => {
                 } else {
                     const user = new User({
                         _id: new mongoose.Types.ObjectId(),
-                        email: req.body.email,
+                        username: req.body.username,
                         password: hash
                     });
                     user.save().then(
                         result => {
                             console.log(user);
                             res.status(201).json({
-                                message: 'User created'
+                                message: 'New User Created!'
                             });
                         }
                     ).catch(err => {
@@ -48,7 +48,7 @@ router.post('/signup', (req, res, next) => {
 
 router.post('/login', (req, res, next) => {
     User.find({
-        email: req.body.email
+        username: req.body.username
     }).exec().then(user => {
         if (user.length < 1) {
             return res.status(401).json({
@@ -64,7 +64,7 @@ router.post('/login', (req, res, next) => {
             }
             if (result) {
                 const token = jwt.sign({
-                    email: user[0].email,
+                    username: user[0].username,
                     userId: user[0]._id
                 }, process.env.JWT_KEY,
                 {

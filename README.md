@@ -3,7 +3,7 @@ A RESTful Image Repository built on Node.js using Express.js and Mongo
 Users can Upload, Retrieve, and Delete their Images  
 
 ## Prerequisites
-NodeJS v14.15.4 or later
+NodeJS v14.15.4 or later  
 A MongoDB Connection URI  
 Postman
 

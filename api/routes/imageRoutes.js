@@ -10,7 +10,7 @@ const storage = multer.diskStorage({
         cb(null, './uploads/');
     },
     filename: function(req, file, cb) {
-        cb(null, file.originalname);
+        cb(null, req.userData.username + '_' + file.originalname);
     }
 });
 const filter = (req, file, cb) => {
@@ -30,8 +30,8 @@ const upload = multer({
 const Image = require('../models/image');
 
 router.get('/', checkAuth, (req, res, next) => {
-    Image.find()
-    .select('name _id image')
+    Image.find({userId: req.userData.userId})
+    .select('name _id userId image')
     .exec()
     .then(docs => {
         const response = {
@@ -50,7 +50,7 @@ router.get('/', checkAuth, (req, res, next) => {
 
 router.get('/:imageId', checkAuth, (req, res, next) => {
     const imageId = req.params.imageId;
-    Image.findById(imageId)
+    Image.find({_id: imageId, userId: req.userData.userId})
     .select('_id name image')
     .exec()
     .then(doc => {
@@ -68,17 +68,16 @@ router.get('/:imageId', checkAuth, (req, res, next) => {
     });
 });
 
-router.post('/multiple', checkAuth, upload.array('images', 1000), async (req, res, next) => {
-    console.log(req.files);
+router.post('/multiple', checkAuth, upload.array('images', 1000), (req, res, next) => {
     let count = 0;
     for (let i = 0; i < req.files.length; i++) {
         const image = new Image({
             _id: new mongoose.Types.ObjectId(),
-            name: req.files[i].originalname,
-            image: req.files[i].path,
+            userId: req.userData.userId,
+            name: req.userData.username + '_' + req.files[i].originalname,
             size: req.files[i].size
         });
-        await image.save().then( result => {
+        image.save().then( result => {
             count++;
             console.log("Uploaded " + count + " of " + req.files.length + " images.")
         }).catch(
@@ -99,11 +98,10 @@ router.post('/multiple', checkAuth, upload.array('images', 1000), async (req, re
 });
 
 router.post('/', checkAuth, upload.single('image'), (req, res, next) => {
-    console.log(req.file);
     const image = new Image({
         _id:  new mongoose.Types.ObjectId(),
-        name: req.file.originalname,
-        image: req.file.path,
+        userId: req.userData.userId,
+        name: req.userData.username + '_' + req.file.originalname,
         size: req.file.size
     });
     image.save()
@@ -112,7 +110,7 @@ router.post('/', checkAuth, upload.single('image'), (req, res, next) => {
             message: 'Uploaded Image Successfully',
             uploadedImage: {
                 _id: result._id,
-                image: result.image,
+                userId: result.userId,
                 size: result.size,
                 request: {
                     method: 'GET',
@@ -129,54 +127,69 @@ router.post('/', checkAuth, upload.single('image'), (req, res, next) => {
     });
 });
 
-router.delete('/:imageId', checkAuth, async (req,res,next) => {
+router.delete('/:imageId', checkAuth, (req,res,next) => {
     const id = req.params.imageId;
-    var filepath = "";
-    await Image.findById(id).exec().then(
+    Image.find({_id: id, userId: req.userData.userId}).exec().then(
         result => {
-            filepath = result.image;
+            if (result.length > 0) {
+                    Image.deleteOne({_id: result[0]._id}).exec()
+                    .then(result => {
+                        const response = {
+                            message: "Image Deleted"
+                        }
+                        fs.unlinkSync(`${process.cwd()}/uploads/${filename}`)
+                        res.status(200).json(response);
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        res.status(500).json({
+                            error: err
+                        })
+                    });
+            } else {
+                res.status(500).json({
+                    message: "No image was found with the provided id."
+                });
+            }
         }
     );
-    Image.deleteOne({_id: id}).exec()
-    .then(result => {
-        const response = {
-            message: "Image Deleted"
-        }
-        fs.unlinkSync(`${process.cwd()}/${filepath}`)
-        res.status(200).json(response);
-    })
-    .catch(err => {
-        console.log(err);
-        res.status(500).json({
-            error: err
-        })
-    });
+
 });
 
 router.delete('/', checkAuth, (req, res, next) => {
-    Image.deleteMany({}).exec()
-    .then(result => {
-        const response = {
-            message: "Images Deleted"
-        }
-        const dir = `${process.cwd()}/uploads`;
-        fs.readdir(dir, (err, files) => {
-            if (err) throw err;
-
-            for (const file of files) {
-                fs.unlink(path.join(dir, file), err => {
-                    if (err) throw err;
+    Image.find({userId: req.userData.userId}).exec().then(
+        result => {
+            if (result.length > 0) {
+                Image.deleteMany({userId: req.userData.userId}).exec()
+                .then(mongoResult => {
+                    const dir = `${process.cwd()}/uploads`;
+                    fs.readdir(dir, (err, files) => {
+                        if (err) throw err;
+                        for (let i = 0; i < result.length; i++) {
+                            fs.unlink(path.join(dir, result[i].name), err => {
+                                if (err) throw err;
+                            })
+                        }
+                    });
+                    const response = {
+                        message: "Images Deleted"
+                    }
+                    res.status(200).json(response);
+                })
+                .catch(err => {
+                    console.log(err);
+                    res.status(500).json({
+                        error: err
+                    })
                 });
+            } else {
+                res.status(500).json({
+                    message: "No Images to be Deleted"
+                })
             }
-        });
-        res.status(200).json(response);
-    })
-    .catch(err => {
-        console.log(err);
-        res.status(500).json({
-            error: err
-        })
-    });
+        }
+    )
+
 })
 
 module.exports = router;

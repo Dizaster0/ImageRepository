@@ -5,10 +5,10 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const imageRoutes = require('./api/routes/imageRoutes');
 const userRoutes = require('./api/routes/userRoutes');
+require('dotenv').config()
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useCreateIndex: true,
 });
 
 

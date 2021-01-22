@@ -1,5 +1,7 @@
+/**
+ * Mongoose schema that defines a User entity.
+ */
 const mongoose = require('mongoose');
-
 const userSchema = mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
     username: {

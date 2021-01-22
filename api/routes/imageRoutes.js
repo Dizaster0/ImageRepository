@@ -29,6 +29,10 @@ const upload = multer({
 });
 const Image = require('../models/image');
 
+/**
+ * Handles GET request to the 'images/' endpoint.
+ * Returns a JSON document of all images linked to the User.
+ */
 router.get('/', checkAuth, (req, res, next) => {
     Image.find({userId: req.userData.userId})
     .select('name _id userId image')
@@ -41,17 +45,20 @@ router.get('/', checkAuth, (req, res, next) => {
         res.status(200).json(response);
     })
     .catch(err => {
-        console.log(err);
         res.status(500).json({
             error: err
         });
     });
 });
 
+/**
+ * Handles GET requests to the images/:imageId endpoint.
+ * Returns a JSON document of the image with the provided image id.
+ */
 router.get('/:imageId', checkAuth, (req, res, next) => {
     const imageId = req.params.imageId;
     Image.find({_id: imageId, userId: req.userData.userId})
-    .select('_id name image')
+    .select('_id name size')
     .exec()
     .then(doc => {
         if (doc) {
@@ -68,74 +75,97 @@ router.get('/:imageId', checkAuth, (req, res, next) => {
     });
 });
 
-router.post('/multiple', checkAuth, upload.array('images', 1000), (req, res, next) => {
-    let count = 0;
-    for (let i = 0; i < req.files.length; i++) {
-        const image = new Image({
-            _id: new mongoose.Types.ObjectId(),
-            userId: req.userData.userId,
-            name: req.userData.username + '_' + req.files[i].originalname,
-            size: req.files[i].size
-        });
-        image.save().then( result => {
-            count++;
-            console.log("Uploaded " + count + " of " + req.files.length + " images.")
-        }).catch(
-            err => {
-                console.log(err);
-            }
-        )
-    }
-    if (count === req.files.length) {
-        res.status(201).json({
-            message: 'Uploaded Images Successfully',  
+/**
+ * Handles POST request to 'upload/multiple' route.
+ * Allows a User to upload multiple images.
+ */
+router.post('/multiple', checkAuth, upload.array('images', 1000), async (req, res, next) => {
+    if (req.files == undefined || req.files.length == 0) {
+        res.status(500).json({
+            message: "Please select one or more .jpg/.png images for upload and try again."
         });
     } else {
+        let count = 0;
+        for (let i = 0; i < req.files.length; i++) {
+            const image = new Image({
+                _id: new mongoose.Types.ObjectId(),
+                userId: req.userData.userId,
+                name: req.userData.username + '_' + req.files[i].originalname,
+                size: req.files[i].size
+            });
+            await image.save().then( result => {
+                count++;
+                console.log("Uploaded " + count + " of " + req.files.length + " images.")
+            }).catch(
+                err => {
+                    console.log(err);
+                }
+            )
+        }
+        if (count === req.files.length) {
+            res.status(201).json({
+                message: `Uploaded ${count} Images Successfully`,  
+            });
+        } else {
+            res.status(500).json({
+                message: 'Something went wrong when uploading your images.'
+            });
+        }
+    }
+});
+
+/**
+ * Handles POST request for the 'images/' endpoint.
+ * Allows a User to upload a single image.
+ */
+router.post('/', checkAuth, upload.single('image'), (req, res, next) => {
+    if (req.file == undefined) {
         res.status(500).json({
-            message: 'Something went wrong when uploading multiple files'
+            message: 'Please select a single .jpg/.png image for upload and try again.'
+        })
+    } else {
+        const image = new Image({
+            _id:  new mongoose.Types.ObjectId(),
+            userId: req.userData.userId,
+            name: req.userData.username + '_' + req.file.originalname,
+            size: req.file.size
+        });
+        image
+        .save()
+        .then(result => {
+            res.status(201).json({
+                message: 'Uploaded Image Successfully',
+                uploadedImage: {
+                    _id: result._id,
+                    userId: result.userId,
+                    name: result.name,
+                    size: result.size
+                }
+            });
+        })
+        .catch(err => {
+            console.log(err);
+            res.status(500).json({
+                error: err
+            });
         });
     }
 });
 
-router.post('/', checkAuth, upload.single('image'), (req, res, next) => {
-    const image = new Image({
-        _id:  new mongoose.Types.ObjectId(),
-        userId: req.userData.userId,
-        name: req.userData.username + '_' + req.file.originalname,
-        size: req.file.size
-    });
-    image.save()
-    .then(result => {
-        res.status(201).json({
-            message: 'Uploaded Image Successfully',
-            uploadedImage: {
-                _id: result._id,
-                userId: result.userId,
-                size: result.size,
-                request: {
-                    method: 'GET',
-                    url: 'http://localhost:3000/images/' + result._id
-                }
-            }
-        });
-    })
-    .catch(err => {
-        console.log(err);
-        res.status(500).json({
-            error: err
-        });
-    });
-});
-
+/**
+ * Handles DELETE requests to the 'images/:imageid' endpoint.
+ * Deletes an image based on id.
+ */
 router.delete('/:imageId', checkAuth, (req,res,next) => {
     const id = req.params.imageId;
     Image.find({_id: id, userId: req.userData.userId}).exec().then(
         result => {
             if (result.length > 0) {
                     Image.deleteOne({_id: result[0]._id}).exec()
-                    .then(result => {
+                    .then(mongoResult => {
+                        let filename = result[0].name;
                         const response = {
-                            message: "Image Deleted"
+                            message: `${filename} deleted.`
                         }
                         fs.unlinkSync(`${process.cwd()}/uploads/${filename}`)
                         res.status(200).json(response);
@@ -148,7 +178,7 @@ router.delete('/:imageId', checkAuth, (req,res,next) => {
                     });
             } else {
                 res.status(500).json({
-                    message: "No image was found with the provided id."
+                    message: "Please provide an valid image id."
                 });
             }
         }
@@ -156,6 +186,10 @@ router.delete('/:imageId', checkAuth, (req,res,next) => {
 
 });
 
+/**
+ * Handles DELETE requests to the 'images/' endpoint.
+ * Deletes all of the User's images. 
+ */
 router.delete('/', checkAuth, (req, res, next) => {
     Image.find({userId: req.userData.userId}).exec().then(
         result => {
@@ -172,7 +206,7 @@ router.delete('/', checkAuth, (req, res, next) => {
                         }
                     });
                     const response = {
-                        message: "Images Deleted"
+                        message: "All images have been deleted."
                     }
                     res.status(200).json(response);
                 })
@@ -184,7 +218,7 @@ router.delete('/', checkAuth, (req, res, next) => {
                 });
             } else {
                 res.status(500).json({
-                    message: "No Images to be Deleted"
+                    message: "There are no images left to be deleted."
                 })
             }
         }

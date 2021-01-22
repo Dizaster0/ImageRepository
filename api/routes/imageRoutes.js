@@ -86,23 +86,30 @@ router.post('/multiple', checkAuth, upload.array('images', 1000), async (req, re
         });
     } else {
         let count = 0;
+        let filesToUpload = req.files.length;
         for (let i = 0; i < req.files.length; i++) {
+            let imageName = req.userData.username + '_' + req.files[i].originalname;
             const image = new Image({
                 _id: new mongoose.Types.ObjectId(),
                 userId: req.userData.userId,
-                name: req.userData.username + '_' + req.files[i].originalname,
+                name: imageName,
                 size: req.files[i].size
             });
-            await image.save().then( result => {
-                count++;
-                console.log("Uploaded " + count + " of " + req.files.length + " images.")
-            }).catch(
-                err => {
+            let result = await Image
+            .find({name: imageName})
+            .exec();
+            if (result.length === 0) {
+                await image.save()
+                .then(result => {
+                        count++;
+                }).catch(err => {
                     console.log(err);
+                })} else {
+                    console.log(`Skipping upload of ${req.files[i].originalname} since it already exists in your database.`);
+                    filesToUpload--;
                 }
-            )
         }
-        if (count === req.files.length) {
+        if (count === filesToUpload) {
             res.status(201).json({
                 message: `Uploaded ${count} Images Successfully`,  
             });
@@ -118,37 +125,44 @@ router.post('/multiple', checkAuth, upload.array('images', 1000), async (req, re
  * Handles POST request for the 'images/' endpoint.
  * Allows a User to upload a single image.
  */
-router.post('/', checkAuth, upload.single('image'), (req, res, next) => {
+router.post('/', checkAuth, upload.single('image'), async (req, res, next) => {
     if (req.file == undefined) {
         res.status(500).json({
             message: 'Please select a single .jpg/.png image for upload and try again.'
         })
     } else {
+        let imageName = req.userData.username + '_' + req.file.originalname;
         const image = new Image({
             _id:  new mongoose.Types.ObjectId(),
             userId: req.userData.userId,
             name: req.userData.username + '_' + req.file.originalname,
             size: req.file.size
         });
-        image
-        .save()
-        .then(result => {
-            res.status(201).json({
-                message: 'Uploaded Image Successfully',
-                uploadedImage: {
-                    _id: result._id,
-                    userId: result.userId,
-                    name: result.name,
-                    size: result.size
-                }
-            });
-        })
-        .catch(err => {
-            console.log(err);
+        let fileExists = await Image.find({name: imageName}).exec();
+        if (fileExists.length >= 1) {
             res.status(500).json({
-                error: err
+                message: `The image ${req.file.originalname} already exists in your database.`
             });
-        });
+        } else {
+            image.save().then(
+                result => {
+                    res.status(201).json({
+                        message: 'Uploaded Image Successfully',
+                        uploadedImage: {
+                            _id: result._id,
+                            userId: result.userId,
+                            name: result.name,
+                            size: result.size
+                    }
+                });
+            })
+            .catch(err => {
+                console.log(err);
+                res.status(500).json({
+                    error: err
+                });
+            });
+        }
     }
 });
 
@@ -206,7 +220,7 @@ router.delete('/', checkAuth, (req, res, next) => {
                         }
                     });
                     const response = {
-                        message: "All images have been deleted."
+                        message: "All images have been deleted from your database."
                     }
                     res.status(200).json(response);
                 })
@@ -218,7 +232,7 @@ router.delete('/', checkAuth, (req, res, next) => {
                 });
             } else {
                 res.status(500).json({
-                    message: "There are no images left to be deleted."
+                    message: "There are no images in your database."
                 })
             }
         }

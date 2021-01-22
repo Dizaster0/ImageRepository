@@ -76,7 +76,7 @@ router.post('/login', (req, res, next) => {
                     expiresIn: "1h"
                 });
                 return res.status(200).json({
-                    message: "Successfully Authenticated",
+                    message: "Successfully Authenticated. Please include your token in your Authorization header for future requests.",
                     token: token
                 })
             }

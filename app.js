@@ -21,7 +21,7 @@ app.use(bodyParser.json());
 app.use('/images', imageRoutes);
 app.use('/user', userRoutes);
 app.use((req, res, next) => {
-    const error = new Error('Not found');
+    const error = new Error('Please enter a valid endpoint as defined in README.md');
     error.status = 404;
     next(error);
 });

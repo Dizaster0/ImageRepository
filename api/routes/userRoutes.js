@@ -3,9 +3,12 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
 const User = require("../models/user");
 
+/**
+ * Handles POST requests to the 'user/signup' endpoint.
+ * Allows a User to register by providing a unique Username and Password.
+ */
 router.post('/signup', (req, res, next) => {
     User.find({
         username: req.body.username
@@ -13,7 +16,7 @@ router.post('/signup', (req, res, next) => {
     .then(user => {
         if (user.length >= 1) {
             return res.status(409).json({
-                message: "The provided username is already taken. Please provide a unique User Id."
+                message: "The username entered is already taken. Please enter a unique username."
             });
         } else {
             bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -29,13 +32,11 @@ router.post('/signup', (req, res, next) => {
                     });
                     user.save().then(
                         result => {
-                            console.log(user);
                             res.status(201).json({
-                                message: 'New User Created!'
+                                message: `Thank you for signing up ${user.username}. Proceed to 'user/login' with your new credentials to receive your authorization token.`,
                             });
                         }
                     ).catch(err => {
-                        console.log(err);
                         res.status(500).json({
                             error: err
                         });
@@ -46,6 +47,10 @@ router.post('/signup', (req, res, next) => {
     })
 });
 
+/**
+ * Handles POST request to the 'user/login' endpoint.
+ * Allows a User to login with their credentials and retreive a JWT access token.
+ */
 router.post('/login', (req, res, next) => {
     User.find({
         username: req.body.username

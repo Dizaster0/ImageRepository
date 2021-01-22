@@ -5,7 +5,7 @@ Users can Upload, Retrieve, and Delete their Images
 ## Prerequisites
 NodeJS v14.15.4 or later  
 A MongoDB Connection URI  
-Postman or cURL (Send HTTP requests)  
+Postman (Send HTTP requests with Form Data)  
 
 ## Setup
 1. Clone the repository and switch to master branch
@@ -34,11 +34,13 @@ POST : Upload Single Image
 ParamName=image  
 Endpoint: /images  
 You can upload a single image by sending an HTTP POST request to the endpoint and passing an image in the request body.  
+*Note: You must attach images as form-data in your HTTP request.
 
 POST: Upload Multiple Images  
 ParamName=images  
 Endpoint: /images/multiple  
 You can upload multiple images by sending an HTTP POST request to the endpoint and passing multiple images in the request body.  
+*Note: You must attach images as form-data in your HTTP request.
 
 GET: Get Single Image  
 QueryParam: imageId  

@@ -72,10 +72,10 @@ router.get('/:imageId', checkAuth, (req, res) => {
 });
 
 /**
- * Handles POST request to 'upload/multiple' route.
- * Allows a User to upload multiple images.
+ * Handles POST request to 'images/' route.
+ * Allows a User to upload one or more images.
  */
-router.post('/multiple', checkAuth, upload.array('images', 1000), async (req, res, next) => {
+router.post('/', checkAuth, upload.array('images', 1000), async (req, res, next) => {
     if (req.files == undefined || req.files.length == 0) {
         res.status(400).json({
             message: "Please select one or more .jpg/.png images for upload and try again."
@@ -104,53 +104,12 @@ router.post('/multiple', checkAuth, upload.array('images', 1000), async (req, re
         }
         if (count === filesToUpload) {
             res.status(201).json({
-                message: `Uploaded ${count} Images Successfully`,  
+                message: `Uploaded ${count} Images Successfully`,
+                request: `GET All Images - http://localhost:${process.env.PORT}/images/` 
             });
         } else {
             res.status(500).json({
                 message: 'Something went wrong when uploading your images.'
-            });
-        }
-    }
-});
-
-/**
- * Handles POST request for the 'images/' endpoint.
- * Allows a User to upload a single image.
- */
-router.post('/', checkAuth, upload.single('image'), async (req, res) => {
-    if (req.file == undefined) {
-        res.status(400).json({
-            message: 'Please select a single .jpg/.png image for upload and try again.'
-        })
-    } else {
-        let imageName = req.userData.username + '_' + req.file.originalname;
-        const image = new Image({
-            _id:  new mongoose.Types.ObjectId(),
-            userId: req.userData.userId,
-            name: req.userData.username + '_' + req.file.originalname,
-            size: req.file.size
-        });
-        let fileExists = await Image.find({name: imageName}).exec();
-        if (fileExists.length >= 1) {
-            res.status(500).json({
-                message: `The image ${req.file.originalname} already exists in your database.`
-            });
-        } else {
-            image.save().then(
-                result => {
-                    res.status(201).json({
-                        message: 'Uploaded Image Successfully',
-                        uploadedImage: {
-                            _id: result._id,
-                            userId: result.userId,
-                            name: result.name,
-                            size: result.size
-                    }});
-            }).catch(err => {
-                res.status(500).json({
-                    error: err
-                });
             });
         }
     }

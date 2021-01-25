@@ -30,16 +30,10 @@ Note: API calls are secured to the logged in user. You will not be able to retri
 ### Image API  
 To use any of the API's below, you must pass a valid JWT token in an Authorization request header.    
 
-POST : Upload Single Image     
-ParamName=image  
-Endpoint: /images  
-You can upload a single image by sending an HTTP POST request to the endpoint and passing an image in the request body.  
-*Note: You must attach images as form-data in your HTTP request.
-
-POST: Upload Multiple Images  
+POST: Upload Images. 
 ParamName=images  
-Endpoint: /images/multiple  
-You can upload multiple images by sending an HTTP POST request to the endpoint and passing multiple images in the request body.  
+Endpoint: /images/  
+You can upload images by sending an HTTP POST request to the endpoint and passing images in the request body.  
 *Note: You must attach images as form-data in your HTTP request.
 
 GET: Get Single Image  
